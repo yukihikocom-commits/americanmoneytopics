@@ -56,3 +56,16 @@ def filter_and_rank(articles):
     try:
         response = client.messages.create(
             model=CLAUDE_MODEL,
+            max_tokens=2048,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        candidates = json.loads(raw)
+        logger.info(f"フィルタリング完了: {len(candidates)}件選出")
+        return candidates
+    except json.JSONDecodeError as e:
+        logger.error(f"JSONパースエラー: {e}")
+        return []
+    except Exception as e:
+        logger.error(f"Claude API エラー: {e}")
+        return []
