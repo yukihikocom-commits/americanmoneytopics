@@ -74,3 +74,62 @@ def filter_and_rank(articles):
     except Exception as e:
         logger.error(f"Claude API エラー: {e}")
         return []
+
+
+def generate_x_posts(candidates):
+    if not candidates:
+        return candidates
+
+    articles_text = "\n".join(
+        f"{i+1}. [{c.get('category', '')}] {c['title']} — {c.get('reason', '')}\nURL: {c['url']}"
+        for i, c in enumerate(candidates)
+    )
+
+    prompt = f"""あなたは在米日本人向けお金情報メディアのSNS担当です。
+
+読者像: {READER_PERSONA}
+
+以下の各記事について、X（旧Twitter）への投稿文を日本語で作成してください。
+
+条件:
+- 全角・半角を合わせて140文字以内（URLの23文字を除いた本文のみ）
+- 在米日本人に刺さる切り口・言葉遣い
+- 数字・期限・金額など具体的な情報を優先して入れる
+- ハッシュタグは最後に1〜2個（例: #在米生活 #確定申告）
+- 絵文字は冒頭に1つだけ使う
+
+出力はJSON形式のみで返してください。それ以外のテキストは不要です。
+
+フォーマット:
+[
+  {{
+    "rank": 1,
+    "x_post": "投稿本文（URLは含めない）"
+  }}
+]
+
+記事リスト:
+{articles_text}
+"""
+
+    try:
+        response = client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=4096,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+            raw = raw.strip()
+        posts = json.loads(raw)
+        post_map = {p["rank"]: p["x_post"] for p in posts}
+        for c in candidates:
+            c["x_post"] = post_map.get(c["rank"], "")
+        logger.info(f"Xポスト生成完了: {len(posts)}件")
+    except Exception as e:
+        logger.error(f"Xポスト生成エラー: {e}")
+
+    return candidates

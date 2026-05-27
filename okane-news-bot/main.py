@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 import config
 from fetcher import fetch_all
-from claude_client import filter_and_rank
+from claude_client import filter_and_rank, generate_x_posts
 
 load_dotenv()
 
@@ -58,6 +58,9 @@ def build_markdown(candidates, date_str):
             f"- 出典: {item.get('source', '—')}",
             f"- URL: {item.get('url', '—')}",
             "",
+            f"【Xポスト案】",
+            item.get('x_post', '—'),
+            "",
             "---",
             "",
         ]
@@ -84,6 +87,8 @@ def main():
     if not candidates:
         logger.error("ネタ候補を生成できませんでした")
         sys.exit(1)
+
+    candidates = generate_x_posts(candidates)
 
     date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     markdown = build_markdown(candidates, date_str)
