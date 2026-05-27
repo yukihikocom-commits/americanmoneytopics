@@ -60,6 +60,11 @@ def filter_and_rank(articles):
             messages=[{"role": "user", "content": prompt}],
         )
         raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+            raw = raw.strip()
         candidates = json.loads(raw)
         logger.info(f"フィルタリング完了: {len(candidates)}件選出")
         return candidates
