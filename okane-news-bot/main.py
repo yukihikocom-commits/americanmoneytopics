@@ -94,7 +94,7 @@ def main():
         print("=" * 60)
         logger.info("dry-runのためファイル保存をスキップしました")
     else:
-        output_path = f"output/{date_str}_candidates.md"
+        output_path = f"output/{date_str}_candidates.txt"
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(markdown)
         logger.info(f"保存完了: {output_path}")
