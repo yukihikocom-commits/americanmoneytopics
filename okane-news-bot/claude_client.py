@@ -85,27 +85,36 @@ def generate_x_posts(candidates):
         for i, c in enumerate(candidates)
     )
 
-    prompt = f"""あなたは在米日本人向けお金情報メディアのSNS担当です。
+    prompt = f"""あなたは在米日本人向けお金情報メディアのSNS担当である。
 
 読者像: {READER_PERSONA}
 
-以下の各記事について、X（旧Twitter）への投稿文を日本語で作成してください。
+以下の各記事について、X（旧Twitter）への投稿文を日本語で1記事につき3パターン作成せよ。
+各パターンは違う観点・切り口で書き分けること（例: 結論直球、数字インパクト、実用Tips、読者への問いかけ、など）。
 
-条件:
-- 本文は80〜100文字（URLの23文字は除く）
-- 記事の内容が読んだだけで概ね理解できる要約にする
-- 数字・金額・期限など具体的な情報を必ず含める
-- 在米日本人に向けた言葉遣い
+文体・構成ルール:
+- 本文は120〜180字（URLの23字は除く）
+- だ・である調（です・ます調は禁止）
+- 結論先行（冒頭で要点をズバッと提示）
+- 修飾語は削る。シンプルに、強い言葉で
+- フックは強く、本文はシンプル
+- 数字・金額・期限・制度名・ツール名（サービス名）など具体的情報を必ず入れる
+- 実用Tips（読者が今すぐ行動できる要素）を1つ以上含める
+- 在米日本人向けの言葉遣い
 - ハッシュタグは使わない
-- 絵文字は冒頭に1つだけ使う
+- 絵文字は冒頭に1つだけ
 
-出力はJSON形式のみで返してください。それ以外のテキストは不要です。
+出力はJSON形式のみで返せ。それ以外のテキストは不要。
 
 フォーマット:
 [
   {{
     "rank": 1,
-    "x_post": "投稿本文（URLは含めない）"
+    "x_posts": [
+      {{"angle": "観点ラベル（例: 結論直球）", "text": "投稿本文（URLは含めない）"}},
+      {{"angle": "観点ラベル（例: 数字インパクト）", "text": "投稿本文（URLは含めない）"}},
+      {{"angle": "観点ラベル（例: 実用Tips）", "text": "投稿本文（URLは含めない）"}}
+    ]
   }}
 ]
 
@@ -126,10 +135,10 @@ def generate_x_posts(candidates):
                 raw = raw[4:]
             raw = raw.strip()
         posts = json.loads(raw)
-        post_map = {p["rank"]: p["x_post"] for p in posts}
+        post_map = {p["rank"]: p.get("x_posts", []) for p in posts}
         for c in candidates:
-            c["x_post"] = post_map.get(c["rank"], "")
-        logger.info(f"Xポスト生成完了: {len(posts)}件")
+            c["x_posts"] = post_map.get(c["rank"], [])
+        logger.info(f"Xポスト生成完了: {len(posts)}件 × 3パターン")
     except Exception as e:
         logger.error(f"Xポスト生成エラー: {e}")
 

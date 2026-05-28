@@ -58,12 +58,19 @@ def build_markdown(candidates, date_str):
             f"- 出典: {item.get('source', '—')}",
             f"- URL: {item.get('url', '—')}",
             "",
-            f"【Xポスト案】",
-            item.get('x_post', '—'),
-            "",
-            "---",
-            "",
+            "【Xポスト案（3パターン）】",
         ]
+        x_posts = item.get("x_posts") or []
+        if x_posts:
+            for i, p in enumerate(x_posts, 1):
+                lines += [
+                    f"({i}) [{p.get('angle', '—')}]",
+                    p.get("text", "—"),
+                    "",
+                ]
+        else:
+            lines += ["—", ""]
+        lines += ["---", ""]
     return "\n".join(lines)
 
 
